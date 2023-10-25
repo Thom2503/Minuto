@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Define global variable here
-. dev.conf
+. dev.conf || handle_error "dev.conf not found!"
 
 # TODO: Add required and additional packagenas dependecies 
 # for your implementation
