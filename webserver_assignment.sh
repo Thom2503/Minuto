@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 
 # Define global variable here
+. dev.conf
 
 # TODO: Add required and additional packagenas dependecies 
 # for your implementation
-# declare -a packages=()
+declare -a dependecies=("unzip" "wget" "curl")
 
 # TODO: define a function to handle errors
 # This funtion accepts two parameters one as the error message and one as the command to be excecuted when error occurs.
@@ -13,7 +14,10 @@ function handle_error() {
     echo "function handle_error"
 
    # TODO Display error and return an exit code
-   
+   echo "$1"
+   echo "$2"
+
+   exit 1
 }
  
 # Function to solve dependencies
@@ -23,6 +27,26 @@ function setup() {
 
     # TODO check if nessassary dependecies and folder structure exists and 
     # print the outcome for each checking step
+	# loop door de packages heen om te kijken of ze werken door command -v te gebruiken
+	for dep in "${dependecies[@]}"; do
+		echo "Checking if $dep is installed..."
+		# dit kijkt of de command werkt, het resultaat wat meestal help is wordt naar /dev/null
+		# gestuurd met &>
+		if ! command -v "$dep" &> /dev/null; then
+			handle_error "$dep is not installed" "Install with 'sudo apt install "$dep"'"
+		else
+			echo "$dep is installed."
+		fi
+	done
+	echo "Dependencies are installed"
+	echo "Checking folder structure..."
+	if [ ! -d "$INSTALL_DIR" ]; then
+		mkdir -p "$INSTALL_DIR" || handle_error "Couldn't create an apps directory"
+		echo "Apps folder created"
+	else
+		echo "Apps folder exists"
+	fi
+
     
     # TODO installation from online package requires values for
     # package_name package_url install_dir
@@ -146,4 +170,5 @@ function main() {
 }
 
 # Pass commandline arguments to function main
-main "$@"
+# main "$@"
+setup # dit is voor testen!
