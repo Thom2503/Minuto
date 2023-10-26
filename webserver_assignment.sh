@@ -127,6 +127,8 @@ function uninstall_nosecrets() {
     echo "function uninstall_nosecrets"  
 
     #TODO uninstall nosecrets application
+	# kan nog niet testen maar als het goed is moet dit werken.
+	cd apps/nosecrets && (sudo make uninstall || handle_error "Uninstalling no more secrets not working")
 }
 
 function uninstall_pywebserver() {
