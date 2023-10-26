@@ -51,10 +51,14 @@ function setup() {
 	else
 		echo "Apps folder exists"
 	fi
+
+    
+    # TODO installation from online package requires values for
+    # package_name package_url install_dir
+
     # TODO check if required dependency is not already installed otherwise install it
     # if a a problem occur during the this process 
     # use the function handle_error() to print a messgage and handle the error
-	# ik snap oprecht deze comment niet (Thom)
 }
 
 # Function to install a package from a URL
