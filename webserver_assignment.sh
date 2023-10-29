@@ -6,7 +6,7 @@ package_url=""
 
 # TODO: Add required and additional packagenas dependecies 
 # for your implementation
-declare -a dependecies=("unzip" "wget" "curl")
+declare -a dependecies=("unzip" "wget" "curl" "git" "gcc" "make")
 
 # TODO: define a function to handle errors
 # This funtion accepts two parameters one as the error message and one as the command to be excecuted when error occurs.
@@ -60,16 +60,75 @@ function setup() {
 # Function to install a package from a URL
 # TODO assign the required parameter needed for the logic
 # complete the implementation of the following function.
+
+# functions to maken install easier
+# maak de map aan voor de package
+function create_installation_directory() {
+    pwd
+    if [ ! -d "$locatie" ]; then
+        mkdir -p "$locatie"
+    fi
+    # ga dan gelijk naar de map waar het geinstalleerd moet worden
+    cd "$locatie" || { handle_error "kan niet switchen naar $locatie";}
+}
+
+# Hier download je de package van git, indien dit niet kan push je handle_error
+function download_package() {
+    pwd
+    if ! wget "$package_url"; then
+        handle_error "kan $package niet downloaden vanuit: $package_url"
+    fi
+}
+
+# hier unzip je de package, indien dit niet lukt gooi je een error
+function unzip_package() {
+    pwd
+    local package_file="$(basename "$package_url")"
+    if ! unzip -q "$package_file"; then
+        handle_error "kan $package niet unzippen"
+        rm "$package_file"
+    fi
+}
+# voor conf
+# hier instaleer je het ook echt
+function install_nosecrets() {
+    # ga naar de juiste map
+    cd ./no-more-secrets-master
+    pwd
+    make nms
+    if [ $? -eq 0 ]; then
+        echo "'make nms' gelukt."
+    else
+        handle_error "'make nms' gevaald."
+    fi
+    sudo make install
+    if [ $? -eq 0 ]; then
+        echo "'make install' gelukt."
+    else
+        handle_error "'make install' gevaald."
+    fi
+}
+
+function install_pywebserver() {
+    pwd
+    sudo chmod +x "webserver-master/webserver"
+    if [ $? -eq 0 ]; then
+        echo "pywebserver geconfigureerd"
+    else
+        handle_error "kan de server niet configureren"
+    fi
+}
+
 function install_package() {
     # Do not remove next line!
     echo "function install_package"
 
-    # TODO The logic for downloading from a URL and unizpping the downloaded files of different applications must be generic
+    # TODO The logic for downloading from a URL and unizpping the downloaded files of different applications must be generic (done)
 
     # TODO Specific actions that need to be taken for a specific application during this process should be handeld in a separate if-else
-
+    
     # TODO Every intermediate steps need to be handeld carefully. error handeling should be dealt with using handle_error() and/or rolleback()
-
+    
     # TODO If a file is downloaded but cannot be zipped a rollback is needed to be able to start from scratch
     # for example: package names and urls that are needed are passed or extracted from the config file
 
@@ -85,7 +144,37 @@ function install_package() {
     # TODO this section can be used to implement application specifc logic
     # nosecrets might have additional commands that needs to be executed
     # make sure the user is allowed to remove this folder during uninstall
+    local package="$1"
+    local functie="$2"
 
+    if [ "$functie" == "--install" ]; then
+        case "$package" in
+            "nosecrets")
+                package_url="$APP1_URL"
+                locatie="$INSTALL_DIR/$package"
+                create_installation_directory
+                download_package
+                unzip_package
+                install_nosecrets
+                ;;
+            "pywebserver")
+                package_url="$APP2_URL"
+                locatie="$INSTALL_DIR/$package"
+                create_installation_directory
+                download_package
+                unzip_package
+                install_pywebserver
+                ;;
+            *)
+                handle_error "package niet bekend: $package"
+                exit 1
+                ;;
+        esac
+
+        echo "$package is installed at: $locatie"
+    else
+        handle_error "--install is verplicht!"
+    fi
 }
 
 function rollback_nosecrets() {
