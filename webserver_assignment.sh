@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 # Define global variable here
-$package_name=""
-$package_url=""
+package_name=""
+package_url=""
 
 # TODO: Add required and additional packagenas dependecies 
 # for your implementation
@@ -106,9 +106,16 @@ function test_nosecrets() {
     # Do not remove next line!
     echo "function test_nosecrets"
 
-    # TODO test nosecrets
-    # kill this webserver process after it has finished its job
-
+	echo "Testing no more secrets..."
+	result=$(ls -lah | nms) # resultaat om te kijken of het werkt
+	echo "Checking the result..."
+	# check het resultaat via de exit status van $result
+	if [ $? -eq 0 ]; then
+		echo "No more secrets is working"
+	else
+		# als een error is gevonden echo dat
+		echo "No more secrets is not working found an error: $result"
+	fi
 }
 
 function test_pywebserver() {
