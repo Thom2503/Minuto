@@ -115,11 +115,25 @@ function test_pywebserver() {
     # Do not remove next line!
     echo "function test_pywebserver"    
 
-    # TODO test the webserver
-    # server and port number must be extracted from config.conf
-    # test data must be read from test.json  
-    # kill this webserver process after it has finished its job
-
+	# start de server met python en de goede port
+	echo "Starting the server..."
+	python -m SimpleHTTPServer "$WEBSERVER_PORT" &
+	# lees de process id om het later te kunnen killen
+	webserver_pid=$!
+	sleep 2 # wacht om zeker te zijn dat de server is opgestart
+	# maak een post request om te testen of de server werkt
+	echo "Requesting the server..."
+	resp=$(curl -X POST -w "%{http_code}" -H "Content-Type: application/json" -d @test.json "https://$WEBSERVER_HOST:$WEBSERVER_PORT")
+	echo "Checking server response..."
+	# check de response van de server
+	if [ $resp -eq 200 ]; then
+		echo "Successfull response from server"
+	else
+		echo "Server not responding, error code: $resp"
+	fi
+	# stop de server
+	echo "Killing server process"
+	kill $webserver_pid
 }
 
 function uninstall_nosecrets() {
