@@ -75,7 +75,7 @@ function create_installation_directory() {
 # Hier download je de package van git, indien dit niet kan push je handle_error
 function download_package() {
     pwd
-    if ! wget "$package_url"; then
+    if [ ! wget "$package_url" ]; then
         handle_error "kan $package niet downloaden vanuit: $package_url"
     fi
 }
@@ -84,9 +84,9 @@ function download_package() {
 function unzip_package() {
     pwd
     local package_file="$(basename "$package_url")"
-    if ! unzip -q "$package_file"; then
-        handle_error "kan $package niet unzippen"
+    if [ ! unzip -q "$package_file" ]; then
         rm "$package_file"
+        handle_error "kan $package niet unzippen"
     fi
 }
 # voor conf
@@ -266,11 +266,20 @@ function main() {
     # Check if the first argument is valid
     # allowed values are "setup" "nosecrets" "pywebserver" "remove"
     # bash must exit if value does not match one of those values
+    if [ "$1" != "setup" ] && [ "$1" != "nosecrets" ] && [ "$1" != "pywebserver" ] && [ "$1" != "remove" ]; then
+        handle_error "The first argument should be on of these 4: 'setup'/'nosecrets'/'pywebserver'/'remove'"
+        # should exit if not one of the give arguments on first place (word gedaan door handle error)
+    fi
     # Check if the second argument is provided on the command line
     # Check if the second argument is valid
     # allowed values are "--install" "--uninstall" "--test"
     # bash must exit if value does not match one of those values
-
+    if [ "$2" != "--install" ] && [ "$2" != "--uninstall" ] && [ "$2" != "--test" ]; then
+        handle_error "The second argument should be on of these 3: '--install'/'--uninstall'/'--test'"
+        # should exit if not one of the give arguments on first place
+        exit 1
+    fi
+    # echo "gj"
     # Execute the appropriate command based on the arguments
     # TODO In case of setup
     # excute the function check_dependency and provide necessary arguments
@@ -279,5 +288,5 @@ function main() {
 }
 
 # Pass commandline arguments to function main
-# main "$@"
-setup # dit is voor testen!
+main "$@"
+# setup # dit is voor testen!
