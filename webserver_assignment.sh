@@ -67,7 +67,7 @@ function create_installation_directory() {
 # Hier download je de package van git, indien dit niet kan push je handle_error
 function download_package() {
     pwd
-    if ! wget "$package_url"; then
+    if ! wget "$package_url" ; then
         handle_error "kan $package niet downloaden vanuit: $package_url"
     fi
 }
@@ -76,9 +76,9 @@ function download_package() {
 function unzip_package() {
     pwd
     local package_file="$(basename "$package_url")"
-    if ! unzip -q "$package_file"; then
-        handle_error "kan $package niet unzippen"
+    if ! unzip -q "$package_file" ; then
         rm "$package_file"
+        handle_error "kan $package niet unzippen"
     fi
 }
 # voor conf
@@ -206,13 +206,13 @@ function test_pywebserver() {
 
 	# start de server met python en de goede port
 	echo "Starting the server..."
-	webserver $WEBSERVER_HOST:$WEBSERVER_PORT &
+  ./apps/pywebserver/webserver-master/webserver $WEBSERVER_IP:$WEBSERVER_PORT &
 	# lees de process id om het later te kunnen killen
 	webserver_pid=$!
 	sleep 2 # wacht om zeker te zijn dat de server is opgestart
 	# maak een post request om te testen of de server werkt
 	echo "Requesting the server..."
-	resp=$(curl -X POST -w "%{http_code}" -H "Content-Type: application/json" --data @test.json "http://$WEBSERVER_HOST:$WEBSERVER_PORT")
+	resp=$(curl -X POST -o /dev/null -w "%{http_code}" -H "Content-Type: application/json" --data @test.json "http://$WEBSERVER_IP:$WEBSERVER_PORT")
 	echo "Checking server response..."
 	# check de response van de server
 	if [ $resp -eq 200 ]; then
@@ -261,6 +261,22 @@ function main() {
     # Do not remove next line!
     echo "function main"
 
+    # TODO
+    # Read global variables from configfile
+
+    # Get arguments from the commandline
+    # Check if the first argument is valid
+    # allowed values are "setup" "nosecrets" "pywebserver" "remove"
+    # bash must exit if value does not match one of those values
+    # Check if the second argument is provided on the command line
+    # Check if the second argument is valid
+    # allowed values are "--install" "--uninstall" "--test"
+    # bash must exit if value does not match one of those values
+    # echo "gj"
+    # Execute the appropriate command based on the arguments
+    # TODO In case of setup
+    # excute the function check_dependency and provide necessary arguments
+    # expected arguments are the installation directory specified in dev.conf
 	# haal de argv
 	command_to_do=$1
 	what_to_do=$2
@@ -306,4 +322,6 @@ function main() {
 	esac
 }
 
+
 main "$@"
+
