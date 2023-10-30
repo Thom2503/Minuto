@@ -3,18 +3,16 @@
 # Define global variable here
 package_name=""
 package_url=""
+ran_setup=0
 
 # TODO: Add required and additional packagenas dependecies 
 # for your implementation
 declare -a dependecies=("unzip" "wget" "curl" "git" "gcc" "make")
 
-# TODO: define a function to handle errors
-# This funtion accepts two parameters one as the error message and one as the command to be excecuted when error occurs.
 function handle_error() {
     # Do not remove next line!
     echo "function handle_error"
 
-   # TODO Display error and return an exit code
    echo "$1"
    echo "$2"
 
@@ -26,8 +24,6 @@ function setup() {
     # Do not remove next line!
     echo "function setup"
 
-    # TODO check if nessassary dependecies and folder structure exists and 
-    # print the outcome for each checking step
 	# loop door de packages heen om te kijken of ze werken door command -v te gebruiken
 	for dep in "${dependecies[@]}"; do
 		echo "Checking if $dep is installed..."
@@ -51,10 +47,6 @@ function setup() {
 	else
 		echo "Apps folder exists"
 	fi
-    # TODO check if required dependency is not already installed otherwise install it
-    # if a a problem occur during the this process 
-    # use the function handle_error() to print a messgage and handle the error
-	# ik snap oprecht deze comment niet (Thom)
 }
 
 # Function to install a package from a URL
@@ -112,6 +104,7 @@ function install_nosecrets() {
 function install_pywebserver() {
     pwd
     sudo chmod +x "webserver-master/webserver"
+	$PATH=/apps/webserver-master/:$PATH
     if [ $? -eq 0 ]; then
         echo "pywebserver geconfigureerd"
     else
@@ -213,7 +206,7 @@ function test_pywebserver() {
 
 	# start de server met python en de goede port
 	echo "Starting the server..."
-    ./apps/pywebserver/webserver-master/webserver $WEBSERVER_IP:$WEBSERVER_PORT &
+  ./apps/pywebserver/webserver-master/webserver $WEBSERVER_IP:$WEBSERVER_PORT &
 	# lees de process id om het later te kunnen killen
 	webserver_pid=$!
 	sleep 2 # wacht om zeker te zijn dat de server is opgestart
@@ -230,6 +223,15 @@ function test_pywebserver() {
 	# stop de server
 	echo "Killing server process"
 	kill $webserver_pid
+}
+
+function uninstall_package() {
+	local package=$1
+	if [ $package -eq "nosecrets" ]; then
+		uninstall_nosecrets
+	else
+		uninstall_pywebserver
+	fi
 }
 
 function uninstall_nosecrets() {
@@ -266,36 +268,60 @@ function main() {
     # Check if the first argument is valid
     # allowed values are "setup" "nosecrets" "pywebserver" "remove"
     # bash must exit if value does not match one of those values
-    if [ "$1" != "setup" ] && [ "$1" != "nosecrets" ] && [ "$1" != "pywebserver" ] && [ "$1" != "remove" ]; then
-        handle_error "The first argument should be on of these 4: 'setup'/'nosecrets'/'pywebserver'/'remove'"
-        # should exit if not one of the give arguments on first place (word gedaan door handle error)
-    fi
     # Check if the second argument is provided on the command line
     # Check if the second argument is valid
     # allowed values are "--install" "--uninstall" "--test"
     # bash must exit if value does not match one of those values
-    if [ "$2" != "--install" ] && [ "$2" != "--uninstall" ] && [ "$2" != "--test" ]; then
-        handle_error "The second argument should be on of these 3: '--install'/'--uninstall'/'--test'"
-        # should exit if not one of the give arguments on first place
-        exit 1
-    fi
     # echo "gj"
     # Execute the appropriate command based on the arguments
     # TODO In case of setup
     # excute the function check_dependency and provide necessary arguments
     # expected arguments are the installation directory specified in dev.conf
+	# haal de argv
+	command_to_do=$1
+	what_to_do=$2
 
+	# check of de eerste is ingevuld en of daar de goede commands in zijn gezet
+	case $command_to_do in
+		"setup" | "nosecrets" | "pywebserver" | "remove");;
+		*) handle_error "Invalid command for the first argument!" ;;
+	esac
+
+	# check of wat je doet ook meegegeven word als dat zo is check of het iets is wat kan
+	if [[ ! $what_to_do -eq "" ]]; then
+		case $what_to_do in
+			"--install" | "--uninstall" | "--test");;
+			*) handle_error "Invalid command for the second argument!" ;;
+		esac
+	fi
+
+	# de logica om te bepalen wat je gaat doen met welke functie
+	case $command_to_do in
+		"setup") setup ;;
+		"remove") remove ;;
+		"nosecrets")
+			if [ $what_to_do -eq "--install" ]; then
+				setup
+				install_package $command_to_do $what_to_do
+			elif [ $what_to_do -eq "--uninstall" ]; then
+				uninstall_package $command_to_do
+			else
+				test_nosecrets
+			fi
+		;;
+		"pywebserver")
+			if [ $what_to_do -eq "--install" ]; then
+				setup
+				install_package $command_to_do $what_to_do
+			elif [ $what_to_do -eq "--uninstall" ]; then
+				uninstall_package $command_to_do
+			else
+				test_pywebserver
+			fi
+		;;
+	esac
 }
 
-# Pass commandline arguments to function main
-# main "$@"
-setup # dit is voor testen!
-# Check the command line arguments
-if [ "$#" -ne 2 ]; then
-    handle_error "Usage: $0 <package> --install"
-fi
 
-package="$1"
-functie="$2"
+main "$@"
 
-test_pywebserver "$package" "$functie" 
