@@ -75,7 +75,7 @@ function create_installation_directory() {
 # Hier download je de package van git, indien dit niet kan push je handle_error
 function download_package() {
     pwd
-    if [ ! wget "$package_url" ]; then
+    if ! wget "$package_url" ; then
         handle_error "kan $package niet downloaden vanuit: $package_url"
     fi
 }
@@ -84,7 +84,7 @@ function download_package() {
 function unzip_package() {
     pwd
     local package_file="$(basename "$package_url")"
-    if [ ! unzip -q "$package_file" ]; then
+    if ! unzip -q "$package_file" ; then
         rm "$package_file"
         handle_error "kan $package niet unzippen"
     fi
@@ -213,13 +213,13 @@ function test_pywebserver() {
 
 	# start de server met python en de goede port
 	echo "Starting the server..."
-	python -m SimpleHTTPServer "$WEBSERVER_PORT" &
+    ./apps/pywebserver/webserver-master/webserver $WEBSERVER_IP:$WEBSERVER_PORT &
 	# lees de process id om het later te kunnen killen
 	webserver_pid=$!
 	sleep 2 # wacht om zeker te zijn dat de server is opgestart
 	# maak een post request om te testen of de server werkt
 	echo "Requesting the server..."
-	resp=$(curl -X POST -w "%{http_code}" -H "Content-Type: application/json" -d @test.json "https://$WEBSERVER_HOST:$WEBSERVER_PORT")
+	resp=$(curl -X POST -o /dev/null -w "%{http_code}" -H "Content-Type: application/json" --data @test.json "http://$WEBSERVER_IP:$WEBSERVER_PORT")
 	echo "Checking server response..."
 	# check de response van de server
 	if [ $resp -eq 200 ]; then
@@ -288,5 +288,14 @@ function main() {
 }
 
 # Pass commandline arguments to function main
-main "$@"
-# setup # dit is voor testen!
+# main "$@"
+setup # dit is voor testen!
+# Check the command line arguments
+if [ "$#" -ne 2 ]; then
+    handle_error "Usage: $0 <package> --install"
+fi
+
+package="$1"
+functie="$2"
+
+test_pywebserver "$package" "$functie" 
