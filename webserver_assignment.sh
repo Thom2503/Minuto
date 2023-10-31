@@ -104,7 +104,6 @@ function install_nosecrets() {
 function install_pywebserver() {
     pwd
     sudo chmod +x "webserver-master/webserver"
-	$PATH=/apps/webserver-master/:$PATH
     if [ $? -eq 0 ]; then
         echo "pywebserver geconfigureerd"
     else
@@ -189,11 +188,13 @@ function test_nosecrets() {
     echo "function test_nosecrets"
 
 	echo "Testing no more secrets..."
-	result=$(ls -lah | nms) # resultaat om te kijken of het werkt
+	ls -lah | nms & # resultaat om te kijken of het werkt
+	result=$!
 	echo "Checking the result..."
 	# check het resultaat via de exit status van $result
-	if [ $? -eq 0 ]; then
+	if [ $result -gt 0 ]; then
 		echo "No more secrets is working"
+		kill $result &
 	else
 		# als een error is gevonden echo dat
 		echo "No more secrets is not working found an error: $result"
@@ -206,7 +207,8 @@ function test_pywebserver() {
 
 	# start de server met python en de goede port
 	echo "Starting the server..."
-	./apps/pywebserver/webserver-master/webserver $WEBSERVER_IP:$WEBSERVER_PORT &
+	echo "Starting on host: $WEBSERVER_IP:$WEBSERVER_PORT"
+	apps/pywebserver/webserver-master/webserver $WEBSERVER_IP:$WEBSERVER_PORT &
 	# lees de process id om het later te kunnen killen
 	webserver_pid=$!
 	sleep 2 # wacht om zeker te zijn dat de server is opgestart
@@ -241,16 +243,21 @@ function uninstall_nosecrets() {
 	# ga naar nosecrets
 	cd apps/nosecrets/no-more-secrets-master
 	# voer de uninstall uit
+	echo "uninstalling nosecrets..."
 	sudo make uninstall || handle_error "Uninstalling no more secrets not working"
 	# ga terug naar de root directory
+	# dit is echt super lelijk maar ja boeie
 	cd ../../../
 	# verwijder de nosecrets map
+	echo "removing nosecrets app package..."
 	rm -rf apps/nosecrets
 }
 
 function uninstall_pywebserver() {
     echo "function uninstall_pywebserver"    
-    #TODO uninstall pywebserver application
+	# alleen de package hoeft verwijderd te worden van pywebserver
+	echo "uninstalling pywebserver..."
+	rm -rf apps/pywebserver
 }
 
 #TODO removing installed dependency during setup() and restoring the folder structure to original state
@@ -259,7 +266,16 @@ function remove() {
     echo "function remove"
 
     # Remove each package that was installed during setup
-
+	if [ -d apps/nosecrets ]; then
+		echo "uninstalling nosecrets..."
+		uninstall_nosecrets || handle_error "Could not uninstall nosecrets"
+	fi
+	if [ -d apps/pywebserver ]; then
+		echo "uninstalling pywebserver..."
+		uninstall_pywebserver || handle_error "Could not uninstall pywebserver"
+	fi
+	echo "removing apps/..."
+	rm -rf apps
 }
 
 function main() {
@@ -289,8 +305,8 @@ function main() {
 		"setup") setup ;;
 		"remove") remove ;;
 		"nosecrets")
+			setup # run setup altijd want je hebt het nodig voor de rest
 			if [[ $what_to_do == "--install" ]]; then
-				setup
 				install_package $command_to_do $what_to_do
 			elif [[ $what_to_do == "--uninstall" ]]; then
 				uninstall_package $command_to_do
@@ -299,8 +315,8 @@ function main() {
 			fi
 		;;
 		"pywebserver")
+			setup # run setup altijd want je hebt het nodig voor de rest
 			if [[ $what_to_do == "--install" ]]; then
-				setup
 				install_package $command_to_do $what_to_do
 			elif [[ $what_to_do == "--uninstall" ]]; then
 				uninstall_package $command_to_do
