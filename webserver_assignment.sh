@@ -218,6 +218,7 @@ function test_pywebserver() {
 	apps/pywebserver/webserver-master/webserver "$WEBSERVER_IP":"$WEBSERVER_PORT" &
 	# lees de process id om het later te kunnen killen
 	webserver_pid=$!
+	echo "Waiting for server to start..."
 	sleep 2 # wacht om zeker te zijn dat de server is opgestart
 	# maak een post request om te testen of de server werkt
 	echo "Requesting the server..."
