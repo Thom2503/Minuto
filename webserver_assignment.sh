@@ -157,7 +157,6 @@ function install_package() {
                 ;;
             *)
                 handle_error "package niet bekend: $package"
-                exit 1
                 ;;
         esac
 
@@ -216,7 +215,7 @@ function test_pywebserver() {
 	# start de server met python en de goede port
 	echo "Starting the server..."
 	echo "Starting on host: $WEBSERVER_IP:$WEBSERVER_PORT"
-	apps/pywebserver/webserver-master/webserver $WEBSERVER_IP:$WEBSERVER_PORT &
+	apps/pywebserver/webserver-master/webserver "$WEBSERVER_IP":"$WEBSERVER_PORT" &
 	# lees de process id om het later te kunnen killen
 	webserver_pid=$!
 	sleep 2 # wacht om zeker te zijn dat de server is opgestart
@@ -225,7 +224,7 @@ function test_pywebserver() {
 	resp=$(curl -X POST -o /dev/null -w "%{http_code}" -H "Content-Type: application/json" --data @test.json "http://$WEBSERVER_IP:$WEBSERVER_PORT")
 	echo "Checking server response..."
 	# check de response van de server
-	if [ $resp -eq 200 ]; then
+	if [ "$resp" -eq 200 ]; then
 		echo "Successfull response from server"
 	else
 		echo "Server not responding, error code: $resp"
@@ -249,7 +248,7 @@ function uninstall_nosecrets() {
     echo "function uninstall_nosecrets"  
 
 	# ga naar nosecrets
-	cd apps/nosecrets/no-more-secrets-master
+	cd apps/nosecrets/no-more-secrets-master || handle_error "nosecrets is not installed therefore can't be uninstalled"
 	# voer de uninstall uit
 	echo "uninstalling nosecrets..."
 	sudo make uninstall || handle_error "Uninstalling no more secrets not working"
@@ -315,9 +314,9 @@ function main() {
 		"nosecrets")
 			setup # run setup altijd want je hebt het nodig voor de rest
 			if [[ $what_to_do == "--install" ]]; then
-				install_package $command_to_do $what_to_do
+				install_package "$command_to_do" "$what_to_do"
 			elif [[ $what_to_do == "--uninstall" ]]; then
-				uninstall_package $command_to_do
+				uninstall_package "$command_to_do"
 			else
 				test_nosecrets
 			fi
@@ -325,9 +324,9 @@ function main() {
 		"pywebserver")
 			setup # run setup altijd want je hebt het nodig voor de rest
 			if [[ $what_to_do == "--install" ]]; then
-				install_package $command_to_do $what_to_do
+				install_package "$command_to_do" "$what_to_do"
 			elif [[ $what_to_do == "--uninstall" ]]; then
-				uninstall_package $command_to_do
+				uninstall_package "$command_to_do"
 			else
 				test_pywebserver
 			fi
