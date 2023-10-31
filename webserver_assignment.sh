@@ -12,7 +12,7 @@ function handle_error() {
     echo "function handle_error"
 
    echo "$1"
-   echo "$2"
+   $2
 
    exit 1
 }
@@ -28,7 +28,7 @@ function setup() {
 		# dit kijkt of de command werkt, het resultaat wat meestal help is wordt naar /dev/null
 		# gestuurd met &>
 		if ! command -v "$dep" &> /dev/null; then
-			handle_error "$dep is not installed" "Install with 'sudo apt install $dep'"
+			handle_error "$dep is not installed" "sudo apt install $dep"
 		else
 			echo "$dep is installed."
 		fi
@@ -284,6 +284,16 @@ function remove() {
 	fi
 	echo "removing apps/..."
 	rm -rf apps
+	echo "removing dependencies..."
+	# array with dependencies that were installed for nms
+	declare -a deps_installed=("make" "git" "gcc")
+	# loop through each dependency to uninstall it from the system
+	# waarom je dit zou willen weet ik niet maar staat in de opdracht :P
+	for dep in "${deps_installed[@]}"; do
+		echo "Uninstalling $dep..."
+		sudo apt remove $dep || handle_error "Could not uninstall $dep, most likely sudo needed"
+		echo "$dep uninstalled from system"
+	done
 }
 
 function main() {
