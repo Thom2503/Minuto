@@ -206,7 +206,7 @@ function test_pywebserver() {
 
 	# start de server met python en de goede port
 	echo "Starting the server..."
-  ./apps/pywebserver/webserver-master/webserver $WEBSERVER_IP:$WEBSERVER_PORT &
+	./apps/pywebserver/webserver-master/webserver $WEBSERVER_IP:$WEBSERVER_PORT &
 	# lees de process id om het later te kunnen killen
 	webserver_pid=$!
 	sleep 2 # wacht om zeker te zijn dat de server is opgestart
@@ -227,7 +227,7 @@ function test_pywebserver() {
 
 function uninstall_package() {
 	local package=$1
-	if [ $package -eq "nosecrets" ]; then
+	if [[ $package == "nosecrets" ]]; then
 		uninstall_nosecrets
 	else
 		uninstall_pywebserver
@@ -238,9 +238,8 @@ function uninstall_nosecrets() {
     # Do not remove next line!
     echo "function uninstall_nosecrets"  
 
-    #TODO uninstall nosecrets application
-	# kan nog niet testen maar als het goed is moet dit werken.
-	cd apps/nosecrets && (sudo make uninstall || handle_error "Uninstalling no more secrets not working")
+	cd apps/nosecrets/no-more-secrets-master
+	sudo make uninstall || handle_error "Uninstalling no more secrets not working"
 }
 
 function uninstall_pywebserver() {
@@ -261,22 +260,6 @@ function main() {
     # Do not remove next line!
     echo "function main"
 
-    # TODO
-    # Read global variables from configfile
-
-    # Get arguments from the commandline
-    # Check if the first argument is valid
-    # allowed values are "setup" "nosecrets" "pywebserver" "remove"
-    # bash must exit if value does not match one of those values
-    # Check if the second argument is provided on the command line
-    # Check if the second argument is valid
-    # allowed values are "--install" "--uninstall" "--test"
-    # bash must exit if value does not match one of those values
-    # echo "gj"
-    # Execute the appropriate command based on the arguments
-    # TODO In case of setup
-    # excute the function check_dependency and provide necessary arguments
-    # expected arguments are the installation directory specified in dev.conf
 	# haal de argv
 	command_to_do=$1
 	what_to_do=$2
@@ -300,20 +283,20 @@ function main() {
 		"setup") setup ;;
 		"remove") remove ;;
 		"nosecrets")
-			if [ $what_to_do -eq "--install" ]; then
+			if [[ $what_to_do == "--install" ]]; then
 				setup
 				install_package $command_to_do $what_to_do
-			elif [ $what_to_do -eq "--uninstall" ]; then
+			elif [[ $what_to_do == "--uninstall" ]]; then
 				uninstall_package $command_to_do
 			else
 				test_nosecrets
 			fi
 		;;
 		"pywebserver")
-			if [ $what_to_do -eq "--install" ]; then
+			if [[ $what_to_do == "--install" ]]; then
 				setup
 				install_package $command_to_do $what_to_do
-			elif [ $what_to_do -eq "--uninstall" ]; then
+			elif [[ $what_to_do == "--uninstall" ]]; then
 				uninstall_package $command_to_do
 			else
 				test_pywebserver
