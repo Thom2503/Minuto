@@ -238,8 +238,14 @@ function uninstall_nosecrets() {
     # Do not remove next line!
     echo "function uninstall_nosecrets"  
 
+	# ga naar nosecrets
 	cd apps/nosecrets/no-more-secrets-master
+	# voer de uninstall uit
 	sudo make uninstall || handle_error "Uninstalling no more secrets not working"
+	# ga terug naar de root directory
+	cd ../../../
+	# verwijder de nosecrets map
+	rm -rf apps/nosecrets
 }
 
 function uninstall_pywebserver() {
