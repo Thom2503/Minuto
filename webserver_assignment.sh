@@ -77,39 +77,47 @@ function unzip_package() {
     pwd
     local package_file="$(basename "$package_url")"
     if ! unzip -q "$package_file" ; then
-        rm "$package_file"
-        handle_error "kan $package niet unzippen"
+        # gaat fout bij unzip roep rollback met argumenten welke fout ging en de package file zodat hij weet wat te verwijderen
+        rollback_nosecrets "unzip" $package_file
     fi
 }
 # voor conf
 # hier instaleer je het ook echt
 function install_nosecrets() {
     # ga naar de juiste map
-    cd ./no-more-secrets-master
+    oude_locatie=$(pwd)
+    cd "./no-more-secrets-master"
+    if [ $? -eq 0 ]; then
+        echo "je zit nu in de juiste mapp."
+    else
+        rollback_nosecrets "cd" "no-more-secrets-master"
+    fi
     pwd
     make nms
     if [ $? -eq 0 ]; then
         echo "'make nms' gelukt."
     else
-        handle_error "'make nms' gevaald."
+        rollback_nosecrets "nms" $oude_locatie
     fi
     sudo make install
     if [ $? -eq 0 ]; then
         echo "'make install' gelukt."
     else
-        handle_error "'make install' gevaald."
+        rollback_nosecrets "make" $oude_locatie
     fi
 }
 
 function install_pywebserver() {
     pwd
     sudo chmod +x "webserver-master/webserver"
-	$PATH=/apps/webserver-master/:$PATH
+    # ./webserver
     if [ $? -eq 0 ]; then
-        echo "pywebserver geconfigureerd"
+        echo "rechten gegeven aan de server"
+        echo "you can now run it by going to the right folder and run it!"
     else
-        handle_error "kan de server niet configureren"
+        rollback_nosecrets "chmod" 
     fi
+    pwd
 }
 
 function install_package() {
@@ -175,6 +183,46 @@ function rollback_nosecrets() {
     echo "function rollback_nosecrets"
 
     # TODO rollback intermiediate steps when installation fails
+    # zet eerst de eerste argument zodat ik weet waar het fout gaat
+    error_name=$1
+    extra_info=$2
+    error_message=""
+    case $error_name in
+
+    "unzip")
+        #indien fout gaat bij unzip
+        error_message="kan $extra_info niet unzippen."
+        ;;
+
+    "cd")
+        #indien fout gaat bij unzip
+        error_message="kan niet naar map: $extra_info gaan. bekijk via de read.me of de mappen structuur geupdate moet worden!"
+        ;;
+
+    "nms")
+        # indien het fout gaat bij make nms
+        # sinds niks gedaan is op het verwijderen na en cd gaan we de mappen terug zodat je strak kan verwijderen
+        cd "$extra_info"
+        error_message="'make nms' gevaald."
+        ;;
+
+    "make")
+        # indien het fout gaat bij make moet je eerst nms undoen (na nader inzien kan dit niet so ye)
+        # dit zorgt dat de make niet meer doorgaat
+        make clean
+        cd "$extra_info"
+        error_message="'make install' gevaald."
+        ;;
+
+    *)
+        handle_error "Rollback Error! with name: $error_name"
+        ;;
+    esac
+    # na bepaad te hebben wat er fout gaat, word eerst de package verwijderd
+    rm "$package_file"
+    # daarna word je naar de errohandle gestuurd
+    handle_error "$error_message"
+    # check welke functie naam verkeerd is gegaan en op basis daarvan reset je hetgeen dat gebeurd is en ga je terug
 }
 
 function rollback_pywebserver() {
@@ -182,6 +230,30 @@ function rollback_pywebserver() {
     echo "function rollback_pywebserver"
 
     # TODO rollback intermiediate steps when installation fails
+    # zet eerst de eerste argument zodat ik weet waar het fout gaat
+    error_name=$1
+    extra_info=$2
+    error_message=""
+    case $error_name in
+
+    "unzip")
+        #indien fout gaat bij unzip
+        error_message="kan $extra_info niet unzippen."
+        ;;
+
+    "chmod")
+        error_message="kan de webserver geen rechten geven!"
+        ;;
+
+    *)
+        handle_error "Rollback Error! with name: $error_name"
+        ;;
+    esac
+    # na bepaad te hebben wat er fout gaat, word eerst de package verwijderd
+    rm "$package_file"
+    # daarna word je naar de errohandle gestuurd
+    handle_error "$error_message"
+    # check welke functie naam verkeerd is gegaan en op basis daarvan reset je hetgeen dat gebeurd is en ga je terug
 }
 
 function test_nosecrets() {
@@ -324,4 +396,3 @@ function main() {
 
 
 main "$@"
-
