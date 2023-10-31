@@ -187,6 +187,11 @@ function test_nosecrets() {
     # Do not remove next line!
     echo "function test_nosecrets"
 
+	# check of nosecrets uberhaupt is geinstalleerd
+	if [[ ! -d apps/nosecrets ]]; then
+		handle_error "nosecrets is not installed" "Command to install: ./webserver_assignment.sh nosecrets --install"
+	fi
+
 	echo "Testing no more secrets..."
 	ls -lah | nms & # resultaat om te kijken of het werkt
 	result=$!
@@ -204,6 +209,11 @@ function test_nosecrets() {
 function test_pywebserver() {
     # Do not remove next line!
     echo "function test_pywebserver"    
+
+	# check of pywebserver uberhaupt is geinstalleerd
+	if [[ ! -d apps/pywebserver ]]; then
+		handle_error "Pywebserver is not installed" "Command to install: ./webserver_assignment.sh pywebserver --install"
+	fi
 
 	# start de server met python en de goede port
 	echo "Starting the server..."
