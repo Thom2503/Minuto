@@ -3,10 +3,8 @@
 # Define global variable here
 package_name=""
 package_url=""
-ran_setup=0
 
-# TODO: Add required and additional packagenas dependecies 
-# for your implementation
+# alle benodigde dependencies ook van alle packages
 declare -a dependecies=("unzip" "wget" "curl" "git" "gcc" "make")
 
 function handle_error() {
