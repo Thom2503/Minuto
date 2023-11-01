@@ -79,7 +79,7 @@ function unzip_package() {
 	echo "Unzipping package from $package_url in $package_file..."
     if ! unzip -q "$package_file" ; then
         # gaat fout bij unzip roep rollback met argumenten welke fout ging en de package file zodat hij weet wat te verwijderen
-        rollback_nosecrets "unzip" $package_file
+        roll_back "unzip" $package_file
     fi
 }
 # voor conf
@@ -119,7 +119,7 @@ function install_pywebserver() {
         echo "rechten gegeven aan de server"
         echo "you can now run it by going to the right folder and run it!"
     else
-        rollback_nosecrets "chmod" 
+        rollback_pywebserver "chmod" 
     fi
 }
 
@@ -156,6 +156,14 @@ function install_package() {
         echo "$package is installed at: $locatie"
     else
         handle_error "--install is verplicht!"
+    fi
+}
+
+roll_back() {
+    if [ $locatie = "$INSTALL_DIR/nosecrets" ] ;then
+        rollback_nosecrets $1 $2
+    else 
+        rollback_pywebserver $1 $2
     fi
 }
 
@@ -201,12 +209,13 @@ function rollback_nosecrets() {
     esac
 	echo "Removing package..."
     # na bepaad te hebben wat er fout gaat, word eerst de package verwijderd
-    rm "$package_file"
+    cd ".."
+    rm -rf "nosecrets"
     # daarna word je naar de errohandle gestuurd
+    pwd
     handle_error "$error_message"
     # check welke functie naam verkeerd is gegaan en op basis daarvan reset je hetgeen dat gebeurd is en ga je terug
 }
-
 function rollback_pywebserver() {
     # Do not remove next line!
     echo "function rollback_pywebserver"
@@ -233,7 +242,10 @@ function rollback_pywebserver() {
     esac
 	echo "Removing pywebserver..."
     # na bepaad te hebben wat er fout gaat, word eerst de package verwijderd
-    rm "$package_file"
+    pwd
+    cd ".."
+    pwd
+    rm -rf "pywebserver"
     # daarna word je naar de errohandle gestuurd
     handle_error "$error_message"
     # check welke functie naam verkeerd is gegaan en op basis daarvan reset je hetgeen dat gebeurd is en ga je terug
@@ -404,4 +416,13 @@ function main() {
 }
 
 
-main "$@"
+# main "$@"
+# Check the command line arguments
+if [ "$#" -ne 2 ]; then
+    handle_error "Usage: $0 <package> --install"
+fi
+
+package="$1"
+functie="$2"
+setup
+install_package "$package" "$functie" 
