@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+######
+# Made with love, tears and sweat by:
+# Maruf Rodjan   - 1052505
+# Thom  Veldhuis - 1055805
+######
+
 # Define global variable here
 package_name=""
 package_url=""
@@ -47,14 +53,9 @@ function setup() {
 	fi
 }
 
-# Function to install a package from a URL
-# TODO assign the required parameter needed for the logic
-# complete the implementation of the following function.
-
 # functions to maken install easier
 # maak de map aan voor de package
 function create_installation_directory() {
-    pwd
     if [ ! -d "$locatie" ]; then
         mkdir -p "$locatie"
     fi
@@ -64,7 +65,6 @@ function create_installation_directory() {
 
 # Hier download je de package van git, indien dit niet kan push je handle_error
 function download_package() {
-    pwd
     if ! wget "$package_url" ; then
         handle_error "kan $package niet downloaden vanuit: $package_url"
     fi
@@ -72,7 +72,6 @@ function download_package() {
 
 # hier unzip je de package, indien dit niet lukt gooi je een error
 function unzip_package() {
-    pwd
     local package_file="$(basename "$package_url")"
     if ! unzip -q "$package_file" ; then
         # gaat fout bij unzip roep rollback met argumenten welke fout ging en de package file zodat hij weet wat te verwijderen
@@ -90,7 +89,6 @@ function install_nosecrets() {
     else
         rollback_nosecrets "cd" "no-more-secrets-master"
     fi
-    pwd
     make nms
     if [ $? -eq 0 ]; then
         echo "'make nms' gelukt."
@@ -106,7 +104,6 @@ function install_nosecrets() {
 }
 
 function install_pywebserver() {
-    pwd
     sudo chmod +x "webserver-master/webserver"
     # ./webserver
     if [ $? -eq 0 ]; then
@@ -115,34 +112,12 @@ function install_pywebserver() {
     else
         rollback_nosecrets "chmod" 
     fi
-    pwd
 }
 
 function install_package() {
     # Do not remove next line!
     echo "function install_package"
 
-    # TODO The logic for downloading from a URL and unizpping the downloaded files of different applications must be generic (done)
-
-    # TODO Specific actions that need to be taken for a specific application during this process should be handeld in a separate if-else
-    
-    # TODO Every intermediate steps need to be handeld carefully. error handeling should be dealt with using handle_error() and/or rolleback()
-    
-    # TODO If a file is downloaded but cannot be zipped a rollback is needed to be able to start from scratch
-    # for example: package names and urls that are needed are passed or extracted from the config file
-
-    # TODO check if the application-folder and the url of the dependency exist
-    # TODO create a specific installation folder for the current package
-
-    # TODO Download and unzip the package
-    # if a a problem occur during the this proces use the function handle_error() to print a messgage and handle the error
-
-    # TODO extract the package to the installation folder and store it into a dedicated folder
-    # If a problem occur during the this proces use the function handle_error() to print a messgage and handle the error
-
-    # TODO this section can be used to implement application specifc logic
-    # nosecrets might have additional commands that needs to be executed
-    # make sure the user is allowed to remove this folder during uninstall
     local package="$1"
     local functie="$2"
 
@@ -179,8 +154,6 @@ function rollback_nosecrets() {
     # Do not remove next line!
     echo "function rollback_nosecrets"
 
-    # TODO rollback intermiediate steps when installation fails
-    # zet eerst de eerste argument zodat ik weet waar het fout gaat
     error_name=$1
     extra_info=$2
     error_message=""
@@ -226,8 +199,6 @@ function rollback_pywebserver() {
     # Do not remove next line!
     echo "function rollback_pywebserver"
 
-    # TODO rollback intermiediate steps when installation fails
-    # zet eerst de eerste argument zodat ik weet waar het fout gaat
     error_name=$1
     extra_info=$2
     error_message=""
@@ -341,7 +312,6 @@ function uninstall_pywebserver() {
 	rm -rf apps/pywebserver
 }
 
-#TODO removing installed dependency during setup() and restoring the folder structure to original state
 function remove() {
     # Do not remove next line!
     echo "function remove"
