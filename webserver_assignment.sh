@@ -68,8 +68,9 @@ function create_installation_directory() {
 # Hier download je de package van git, indien dit niet kan push je handle_error
 function download_package() {
 	echo "Downloading package via $package_url..."
+    roll_back "download"
     if ! wget "$package_url" ; then
-        handle_error "kan $package niet downloaden vanuit: $package_url"
+        roll_back "download"
     fi
 }
 
@@ -183,6 +184,11 @@ function rollback_nosecrets() {
         error_message="kan $extra_info niet unzippen."
         ;;
 
+    "download")
+        # indien het fout gaat bij de download
+        error_message="kan $package niet downloaden vanuit: $package_url"
+    ;;
+    
     "cd")
         #indien fout gaat bij unzip
         error_message="kan niet naar map: $extra_info gaan. bekijk via de read.me of de mappen structuur geupdate moet worden!"
@@ -216,11 +222,12 @@ function rollback_nosecrets() {
     handle_error "$error_message"
     # check welke functie naam verkeerd is gegaan en op basis daarvan reset je hetgeen dat gebeurd is en ga je terug
 }
+
 function rollback_pywebserver() {
     # Do not remove next line!
     echo "function rollback_pywebserver"
 
-	echo "Rollbacking nosecrets..."
+	echo "Rollbacking pywebserver..."
 
     error_name=$1
     extra_info=$2
@@ -231,7 +238,10 @@ function rollback_pywebserver() {
         #indien fout gaat bij unzip
         error_message="kan $extra_info niet unzippen."
         ;;
-
+    "download")
+        # indien het fout gaat bij de download
+        error_message="kan $package niet downloaden vanuit: $package_url"
+    ;;
     "chmod")
         error_message="kan de webserver geen rechten geven!"
         ;;
