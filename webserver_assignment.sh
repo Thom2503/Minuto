@@ -414,15 +414,4 @@ function main() {
 		;;
 	esac
 }
-
-
-# main "$@"
-# Check the command line arguments
-if [ "$#" -ne 2 ]; then
-    handle_error "Usage: $0 <package> --install"
-fi
-
-package="$1"
-functie="$2"
-setup
-install_package "$package" "$functie" 
+main "$@"
