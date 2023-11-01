@@ -68,7 +68,6 @@ function create_installation_directory() {
 # Hier download je de package van git, indien dit niet kan push je handle_error
 function download_package() {
 	echo "Downloading package via $package_url..."
-    roll_back "download"
     if ! wget "$package_url" ; then
         roll_back "download"
     fi
@@ -160,7 +159,7 @@ function install_package() {
     fi
 }
 
-roll_back() {
+function roll_back() {
     if [ $locatie = "$INSTALL_DIR/nosecrets" ] ;then
         rollback_nosecrets $1 $2
     else 
@@ -188,7 +187,7 @@ function rollback_nosecrets() {
         # indien het fout gaat bij de download
         error_message="kan $package niet downloaden vanuit: $package_url"
     ;;
-    
+
     "cd")
         #indien fout gaat bij unzip
         error_message="kan niet naar map: $extra_info gaan. bekijk via de read.me of de mappen structuur geupdate moet worden!"
@@ -424,4 +423,4 @@ function main() {
 		;;
 	esac
 }
-main "$@"
+main "$@" 
