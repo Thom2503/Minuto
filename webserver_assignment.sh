@@ -34,7 +34,13 @@ function setup() {
 		# dit kijkt of de command werkt, het resultaat wat meestal help is wordt naar /dev/null
 		# gestuurd met &>
 		if ! command -v "$dep" &> /dev/null; then
-			handle_error "$dep is not installed" "sudo apt install $dep"
+			echo "$dep not installed"
+			sudo apt install $dep
+			if [ $? -eq 0 ]; then
+				echo "$dep is installed"
+			else
+				handle_error "$dep is not installed, error with sudo apt install"
+			fi
 		else
 			echo "$dep is installed."
 		fi
@@ -55,7 +61,7 @@ function setup() {
 
 # functions to maken install easier
 # maak de map aan voor de package
-function create_installation_directory() {
+function location_installation() {
 	echo "Creating installation directory..."
     if [ ! -d "$locatie" ]; then
         mkdir -p "$locatie"
@@ -135,7 +141,7 @@ function install_package() {
             "nosecrets")
                 package_url="$APP1_URL"
                 locatie="$INSTALL_DIR/$package"
-                create_installation_directory
+                location_installation
                 download_package
                 unzip_package
                 install_nosecrets
@@ -143,7 +149,7 @@ function install_package() {
             "pywebserver")
                 package_url="$APP2_URL"
                 locatie="$INSTALL_DIR/$package"
-                create_installation_directory
+                location_installation
                 download_package
                 unzip_package
                 install_pywebserver
@@ -177,29 +183,24 @@ function rollback_nosecrets() {
     extra_info=$2
     error_message=""
     case $error_name in
-
     "unzip")
         #indien fout gaat bij unzip
         error_message="kan $extra_info niet unzippen."
         ;;
-
     "download")
         # indien het fout gaat bij de download
         error_message="kan $package niet downloaden vanuit: $package_url"
-    ;;
-
+    	;;
     "cd")
         #indien fout gaat bij unzip
         error_message="kan niet naar map: $extra_info gaan. bekijk via de read.me of de mappen structuur geupdate moet worden!"
         ;;
-
     "nms")
         # indien het fout gaat bij make nms
         # sinds niks gedaan is op het verwijderen na en cd gaan we de mappen terug zodat je strak kan verwijderen
         cd "$extra_info"
         error_message="'make nms' gevaald."
         ;;
-
     "make")
         # indien het fout gaat bij make moet je eerst nms undoen (na nader inzien kan dit niet so ye)
         # dit zorgt dat de make niet meer doorgaat
@@ -207,7 +208,6 @@ function rollback_nosecrets() {
         cd "$extra_info"
         error_message="'make install' gevaald."
         ;;
-
     *)
         handle_error "Rollback Error! with name: $error_name"
         ;;
@@ -217,7 +217,6 @@ function rollback_nosecrets() {
     cd ".."
     rm -rf "nosecrets"
     # daarna word je naar de errohandle gestuurd
-    pwd
     handle_error "$error_message"
     # check welke functie naam verkeerd is gegaan en op basis daarvan reset je hetgeen dat gebeurd is en ga je terug
 }
@@ -232,7 +231,6 @@ function rollback_pywebserver() {
     extra_info=$2
     error_message=""
     case $error_name in
-
     "unzip")
         #indien fout gaat bij unzip
         error_message="kan $extra_info niet unzippen."
@@ -240,20 +238,17 @@ function rollback_pywebserver() {
     "download")
         # indien het fout gaat bij de download
         error_message="kan $package niet downloaden vanuit: $package_url"
-    ;;
+    	;;
     "chmod")
         error_message="kan de webserver geen rechten geven!"
         ;;
-
     *)
         handle_error "Rollback Error! with name: $error_name"
         ;;
     esac
 	echo "Removing pywebserver..."
     # na bepaad te hebben wat er fout gaat, word eerst de package verwijderd
-    pwd
     cd ".."
-    pwd
     rm -rf "pywebserver"
     # daarna word je naar de errohandle gestuurd
     handle_error "$error_message"
@@ -334,8 +329,8 @@ function uninstall_nosecrets() {
 	echo "uninstalling nosecrets..."
 	sudo make uninstall || handle_error "Uninstalling no more secrets not working"
 	# ga terug naar de root directory
-	# dit is echt super lelijk maar ja boeie
-	cd ../../../
+	# XXX: dit is echt super lelijk maar ja boeie
+	cd ../../../ # HEEL LELIJK, kan fout gaan
 	# verwijder de nosecrets map
 	echo "removing nosecrets app package..."
 	rm -rf $INSTALL_DIR/nosecrets
@@ -351,6 +346,9 @@ function uninstall_pywebserver() {
 function remove() {
     # Do not remove next line!
     echo "function remove"
+
+	# lees voor de zekerheid de content van dev.conf als die bestaat voor de $INSTALL_DIR
+	source dev.conf || handle_error "dev.conf doesn't exist"
 
     # Remove each package that was installed during setup
 	if [ -d $INSTALL_DIR/nosecrets ]; then
@@ -423,4 +421,5 @@ function main() {
 		;;
 	esac
 }
+
 main "$@" 
