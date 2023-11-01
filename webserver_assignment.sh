@@ -56,15 +56,18 @@ function setup() {
 # functions to maken install easier
 # maak de map aan voor de package
 function create_installation_directory() {
+	echo "Creating installation directory..."
     if [ ! -d "$locatie" ]; then
         mkdir -p "$locatie"
     fi
     # ga dan gelijk naar de map waar het geinstalleerd moet worden
+	echo "Changing directory to installation directory..."
     cd "$locatie" || { handle_error "kan niet switchen naar $locatie";}
 }
 
 # Hier download je de package van git, indien dit niet kan push je handle_error
 function download_package() {
+	echo "Downloading package via $package_url..."
     if ! wget "$package_url" ; then
         handle_error "kan $package niet downloaden vanuit: $package_url"
     fi
@@ -73,6 +76,7 @@ function download_package() {
 # hier unzip je de package, indien dit niet lukt gooi je een error
 function unzip_package() {
     local package_file="$(basename "$package_url")"
+	echo "Unzipping package from $package_url in $package_file..."
     if ! unzip -q "$package_file" ; then
         # gaat fout bij unzip roep rollback met argumenten welke fout ging en de package file zodat hij weet wat te verwijderen
         rollback_nosecrets "unzip" $package_file
@@ -82,6 +86,7 @@ function unzip_package() {
 # hier instaleer je het ook echt
 function install_nosecrets() {
     # ga naar de juiste map
+	echo "Installing nosecrets..."
     oude_locatie=$(pwd)
     cd "./no-more-secrets-master"
     if [ $? -eq 0 ]; then
@@ -89,12 +94,14 @@ function install_nosecrets() {
     else
         rollback_nosecrets "cd" "no-more-secrets-master"
     fi
+	echo "Making no more secrets..."
     make nms
     if [ $? -eq 0 ]; then
         echo "'make nms' gelukt."
     else
         rollback_nosecrets "nms" $oude_locatie
     fi
+	echo "Installing nosecrets with make..."
     sudo make install
     if [ $? -eq 0 ]; then
         echo "'make install' gelukt."
@@ -104,6 +111,8 @@ function install_nosecrets() {
 }
 
 function install_pywebserver() {
+	echo "Installing pywebserver..."
+	echo "Giving permission to execute pywebserver"
     sudo chmod +x "webserver-master/webserver"
     # ./webserver
     if [ $? -eq 0 ]; then
@@ -154,6 +163,8 @@ function rollback_nosecrets() {
     # Do not remove next line!
     echo "function rollback_nosecrets"
 
+	echo "Rollbacking nosecrets..."
+
     error_name=$1
     extra_info=$2
     error_message=""
@@ -188,6 +199,7 @@ function rollback_nosecrets() {
         handle_error "Rollback Error! with name: $error_name"
         ;;
     esac
+	echo "Removing package..."
     # na bepaad te hebben wat er fout gaat, word eerst de package verwijderd
     rm "$package_file"
     # daarna word je naar de errohandle gestuurd
@@ -198,6 +210,8 @@ function rollback_nosecrets() {
 function rollback_pywebserver() {
     # Do not remove next line!
     echo "function rollback_pywebserver"
+
+	echo "Rollbacking nosecrets..."
 
     error_name=$1
     extra_info=$2
@@ -217,6 +231,7 @@ function rollback_pywebserver() {
         handle_error "Rollback Error! with name: $error_name"
         ;;
     esac
+	echo "Removing pywebserver..."
     # na bepaad te hebben wat er fout gaat, word eerst de package verwijderd
     rm "$package_file"
     # daarna word je naar de errohandle gestuurd
