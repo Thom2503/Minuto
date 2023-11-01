@@ -3,10 +3,8 @@
 # Define global variable here
 package_name=""
 package_url=""
-ran_setup=0
 
-# TODO: Add required and additional packagenas dependecies 
-# for your implementation
+# alle benodigde dependencies ook van alle packages
 declare -a dependecies=("unzip" "wget" "curl" "git" "gcc" "make")
 
 function handle_error() {
@@ -14,7 +12,7 @@ function handle_error() {
     echo "function handle_error"
 
    echo "$1"
-   echo "$2"
+   $2
 
    exit 1
 }
@@ -30,7 +28,7 @@ function setup() {
 		# dit kijkt of de command werkt, het resultaat wat meestal help is wordt naar /dev/null
 		# gestuurd met &>
 		if ! command -v "$dep" &> /dev/null; then
-			handle_error "$dep is not installed" "Install with 'sudo apt install $dep'"
+			handle_error "$dep is not installed" "sudo apt install $dep"
 		else
 			echo "$dep is installed."
 		fi
@@ -168,7 +166,6 @@ function install_package() {
                 ;;
             *)
                 handle_error "package niet bekend: $package"
-                exit 1
                 ;;
         esac
 
@@ -272,12 +269,19 @@ function test_nosecrets() {
     # Do not remove next line!
     echo "function test_nosecrets"
 
+	# check of nosecrets uberhaupt is geinstalleerd
+	if [[ ! -d apps/nosecrets ]]; then
+		handle_error "nosecrets is not installed" "Command to install: ./webserver_assignment.sh nosecrets --install"
+	fi
+
 	echo "Testing no more secrets..."
-	result=$(ls -lah | nms) # resultaat om te kijken of het werkt
+	ls -lah | nms & # resultaat om te kijken of het werkt
+	result=$!
 	echo "Checking the result..."
 	# check het resultaat via de exit status van $result
-	if [ $? -eq 0 ]; then
+	if [ $result -gt 0 ]; then
 		echo "No more secrets is working"
+		kill $result &
 	else
 		# als een error is gevonden echo dat
 		echo "No more secrets is not working found an error: $result"
@@ -288,18 +292,25 @@ function test_pywebserver() {
     # Do not remove next line!
     echo "function test_pywebserver"    
 
+	# check of pywebserver uberhaupt is geinstalleerd
+	if [[ ! -d apps/pywebserver ]]; then
+		handle_error "Pywebserver is not installed" "Command to install: ./webserver_assignment.sh pywebserver --install"
+	fi
+
 	# start de server met python en de goede port
 	echo "Starting the server..."
-  ./apps/pywebserver/webserver-master/webserver $WEBSERVER_IP:$WEBSERVER_PORT &
+	echo "Starting on host: $WEBSERVER_IP:$WEBSERVER_PORT"
+	apps/pywebserver/webserver-master/webserver "$WEBSERVER_IP":"$WEBSERVER_PORT" &
 	# lees de process id om het later te kunnen killen
 	webserver_pid=$!
+	echo "Waiting for server to start..."
 	sleep 2 # wacht om zeker te zijn dat de server is opgestart
 	# maak een post request om te testen of de server werkt
 	echo "Requesting the server..."
 	resp=$(curl -X POST -o /dev/null -w "%{http_code}" -H "Content-Type: application/json" --data @test.json "http://$WEBSERVER_IP:$WEBSERVER_PORT")
 	echo "Checking server response..."
 	# check de response van de server
-	if [ $resp -eq 200 ]; then
+	if [ "$resp" -eq 200 ]; then
 		echo "Successfull response from server"
 	else
 		echo "Server not responding, error code: $resp"
@@ -311,7 +322,7 @@ function test_pywebserver() {
 
 function uninstall_package() {
 	local package=$1
-	if [ $package -eq "nosecrets" ]; then
+	if [[ $package == "nosecrets" ]]; then
 		uninstall_nosecrets
 	else
 		uninstall_pywebserver
@@ -322,14 +333,24 @@ function uninstall_nosecrets() {
     # Do not remove next line!
     echo "function uninstall_nosecrets"  
 
-    #TODO uninstall nosecrets application
-	# kan nog niet testen maar als het goed is moet dit werken.
-	cd apps/nosecrets && (sudo make uninstall || handle_error "Uninstalling no more secrets not working")
+	# ga naar nosecrets
+	cd apps/nosecrets/no-more-secrets-master || handle_error "nosecrets is not installed therefore can't be uninstalled"
+	# voer de uninstall uit
+	echo "uninstalling nosecrets..."
+	sudo make uninstall || handle_error "Uninstalling no more secrets not working"
+	# ga terug naar de root directory
+	# dit is echt super lelijk maar ja boeie
+	cd ../../../
+	# verwijder de nosecrets map
+	echo "removing nosecrets app package..."
+	rm -rf apps/nosecrets
 }
 
 function uninstall_pywebserver() {
     echo "function uninstall_pywebserver"    
-    #TODO uninstall pywebserver application
+	# alleen de package hoeft verwijderd te worden van pywebserver
+	echo "uninstalling pywebserver..."
+	rm -rf apps/pywebserver
 }
 
 #TODO removing installed dependency during setup() and restoring the folder structure to original state
@@ -338,29 +359,32 @@ function remove() {
     echo "function remove"
 
     # Remove each package that was installed during setup
-
+	if [ -d apps/nosecrets ]; then
+		echo "uninstalling nosecrets..."
+		uninstall_nosecrets || handle_error "Could not uninstall nosecrets"
+	fi
+	if [ -d apps/pywebserver ]; then
+		echo "uninstalling pywebserver..."
+		uninstall_pywebserver || handle_error "Could not uninstall pywebserver"
+	fi
+	echo "removing apps/..."
+	rm -rf apps
+	echo "removing dependencies..."
+	# array with dependencies that were installed for nms
+	declare -a deps_installed=("make" "git" "gcc")
+	# loop through each dependency to uninstall it from the system
+	# waarom je dit zou willen weet ik niet maar staat in de opdracht :P
+	for dep in "${deps_installed[@]}"; do
+		echo "Uninstalling $dep..."
+		sudo apt remove $dep || handle_error "Could not uninstall $dep, most likely sudo needed"
+		echo "$dep uninstalled from system"
+	done
 }
 
 function main() {
     # Do not remove next line!
     echo "function main"
 
-    # TODO
-    # Read global variables from configfile
-
-    # Get arguments from the commandline
-    # Check if the first argument is valid
-    # allowed values are "setup" "nosecrets" "pywebserver" "remove"
-    # bash must exit if value does not match one of those values
-    # Check if the second argument is provided on the command line
-    # Check if the second argument is valid
-    # allowed values are "--install" "--uninstall" "--test"
-    # bash must exit if value does not match one of those values
-    # echo "gj"
-    # Execute the appropriate command based on the arguments
-    # TODO In case of setup
-    # excute the function check_dependency and provide necessary arguments
-    # expected arguments are the installation directory specified in dev.conf
 	# haal de argv
 	command_to_do=$1
 	what_to_do=$2
@@ -384,21 +408,21 @@ function main() {
 		"setup") setup ;;
 		"remove") remove ;;
 		"nosecrets")
-			if [ $what_to_do -eq "--install" ]; then
-				setup
-				install_package $command_to_do $what_to_do
-			elif [ $what_to_do -eq "--uninstall" ]; then
-				uninstall_package $command_to_do
+			setup # run setup altijd want je hebt het nodig voor de rest
+			if [[ $what_to_do == "--install" ]]; then
+				install_package "$command_to_do" "$what_to_do"
+			elif [[ $what_to_do == "--uninstall" ]]; then
+				uninstall_package "$command_to_do"
 			else
 				test_nosecrets
 			fi
 		;;
 		"pywebserver")
-			if [ $what_to_do -eq "--install" ]; then
-				setup
-				install_package $command_to_do $what_to_do
-			elif [ $what_to_do -eq "--uninstall" ]; then
-				uninstall_package $command_to_do
+			setup # run setup altijd want je hebt het nodig voor de rest
+			if [[ $what_to_do == "--install" ]]; then
+				install_package "$command_to_do" "$what_to_do"
+			elif [[ $what_to_do == "--uninstall" ]]; then
+				uninstall_package "$command_to_do"
 			else
 				test_pywebserver
 			fi
