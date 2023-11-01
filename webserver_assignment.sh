@@ -46,10 +46,10 @@ function setup() {
 
 	echo "Checking folder structure..."
 	if [ ! -d "$INSTALL_DIR" ]; then
-		mkdir -p "$INSTALL_DIR" || handle_error "Couldn't create an apps directory"
-		echo "Apps folder created"
+		mkdir -p "$INSTALL_DIR" || handle_error "Couldn't create an $INSTALL_DIR directory"
+		echo "$INSTALL_DIR folder created"
 	else
-		echo "Apps folder exists"
+		echo "$INSTALL_DIR folder exists"
 	fi
 }
 
@@ -244,7 +244,7 @@ function test_nosecrets() {
     echo "function test_nosecrets"
 
 	# check of nosecrets uberhaupt is geinstalleerd
-	if [[ ! -d apps/nosecrets ]]; then
+	if [[ ! -d $INSTALL_DIR/nosecrets ]]; then
 		handle_error "nosecrets is not installed, Command to install: ./webserver_assignment.sh nosecrets --install"
 	fi
 
@@ -267,14 +267,14 @@ function test_pywebserver() {
     echo "function test_pywebserver"    
 
 	# check of pywebserver uberhaupt is geinstalleerd
-	if [[ ! -d apps/pywebserver ]]; then
+	if [[ ! -d $INSTALL_DIR/pywebserver ]]; then
 		handle_error "Pywebserver is not installed, Command to install: ./webserver_assignment.sh pywebserver --install"
 	fi
 
 	# start de server met python en de goede port
 	echo "Starting the server..."
 	echo "Starting on host: $WEBSERVER_IP:$WEBSERVER_PORT"
-	apps/pywebserver/webserver-master/webserver "$WEBSERVER_IP":"$WEBSERVER_PORT" &
+	$INSTALL_DIR/pywebserver/webserver-master/webserver "$WEBSERVER_IP":"$WEBSERVER_PORT" &
 	# lees de process id om het later te kunnen killen
 	webserver_pid=$!
 	echo "Waiting for server to start..."
@@ -308,7 +308,7 @@ function uninstall_nosecrets() {
     echo "function uninstall_nosecrets"  
 
 	# ga naar nosecrets
-	cd apps/nosecrets/no-more-secrets-master || handle_error "nosecrets is not installed therefore can't be uninstalled"
+	cd $INSTALL_DIR/nosecrets/no-more-secrets-master || handle_error "nosecrets is not installed therefore can't be uninstalled"
 	# voer de uninstall uit
 	echo "uninstalling nosecrets..."
 	sudo make uninstall || handle_error "Uninstalling no more secrets not working"
@@ -317,14 +317,14 @@ function uninstall_nosecrets() {
 	cd ../../../
 	# verwijder de nosecrets map
 	echo "removing nosecrets app package..."
-	rm -rf apps/nosecrets
+	rm -rf $INSTALL_DIR/nosecrets
 }
 
 function uninstall_pywebserver() {
     echo "function uninstall_pywebserver"    
 	# alleen de package hoeft verwijderd te worden van pywebserver
 	echo "uninstalling pywebserver..."
-	rm -rf apps/pywebserver
+	rm -rf $INSTALL_DIR/pywebserver
 }
 
 function remove() {
@@ -332,16 +332,16 @@ function remove() {
     echo "function remove"
 
     # Remove each package that was installed during setup
-	if [ -d apps/nosecrets ]; then
+	if [ -d $INSTALL_DIR/nosecrets ]; then
 		echo "uninstalling nosecrets..."
 		uninstall_nosecrets || handle_error "Could not uninstall nosecrets"
 	fi
-	if [ -d apps/pywebserver ]; then
+	if [ -d $INSTALL_DIR/pywebserver ]; then
 		echo "uninstalling pywebserver..."
 		uninstall_pywebserver || handle_error "Could not uninstall pywebserver"
 	fi
-	echo "removing apps/..."
-	rm -rf apps
+	echo "removing $INSTALL_DIR/..."
+	rm -rf $INSTALL_DIR
 	echo "removing dependencies..."
 	# array with dependencies that were installed for nms
 	declare -a deps_installed=("make" "git" "gcc")
