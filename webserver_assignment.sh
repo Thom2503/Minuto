@@ -68,7 +68,7 @@ function location_installation() {
     fi
     # ga dan gelijk naar de map waar het geinstalleerd moet worden
 	echo "Changing directory to installation directory..."
-    cd "$locatie" || { handle_error "kan niet switchen naar $locatie";}
+    cd "$locatie" || { handle_error "can't switch to $locatie";}
 }
 
 # Hier download je de package van git, indien dit niet kan push je handle_error
@@ -96,21 +96,21 @@ function install_nosecrets() {
     oude_locatie=$(pwd)
     cd "./no-more-secrets-master"
     if [ $? -eq 0 ]; then
-        echo "je zit nu in de juiste mapp."
+        echo "you are now in the right directory."
     else
         rollback_nosecrets "cd" "no-more-secrets-master"
     fi
 	echo "Making no more secrets..."
     make nms
     if [ $? -eq 0 ]; then
-        echo "'make nms' gelukt."
+        echo "'make nms' succeeded."
     else
         rollback_nosecrets "nms" $oude_locatie
     fi
 	echo "Installing nosecrets with make..."
     sudo make install
     if [ $? -eq 0 ]; then
-        echo "'make install' gelukt."
+        echo "'make install' succeeded."
     else
         rollback_nosecrets "make" $oude_locatie
     fi
@@ -122,7 +122,7 @@ function install_pywebserver() {
     sudo chmod +x "webserver-master/webserver"
     # ./webserver
     if [ $? -eq 0 ]; then
-        echo "rechten gegeven aan de server"
+        echo "giving rights to server"
         echo "you can now run it by going to the right folder and run it!"
     else
         rollback_pywebserver "chmod" 
@@ -155,13 +155,13 @@ function install_package() {
                 install_pywebserver
                 ;;
             *)
-                handle_error "package niet bekend: $package"
+                handle_error "package unknown: $package"
                 ;;
         esac
 
         echo "$package is installed at: $locatie"
     else
-        handle_error "--install is verplicht!"
+        handle_error "--install is mandatory"
     fi
 }
 
@@ -185,28 +185,28 @@ function rollback_nosecrets() {
     case $error_name in
     "unzip")
         #indien fout gaat bij unzip
-        error_message="kan $extra_info niet unzippen."
+        error_message="cant unzip: $extra_info ."
         ;;
     "download")
         # indien het fout gaat bij de download
-        error_message="kan $package niet downloaden vanuit: $package_url"
+        error_message="can't download $package from: $package_url"
     	;;
     "cd")
         #indien fout gaat bij unzip
-        error_message="kan niet naar map: $extra_info gaan. bekijk via de read.me of de mappen structuur geupdate moet worden!"
+        error_message="can't enter directory: $extra_info . look at read.me from the nosecrets if the strcuture should be changed"
         ;;
     "nms")
         # indien het fout gaat bij make nms
         # sinds niks gedaan is op het verwijderen na en cd gaan we de mappen terug zodat je strak kan verwijderen
         cd "$extra_info"
-        error_message="'make nms' gevaald."
+        error_message="'make nms' failed."
         ;;
     "make")
         # indien het fout gaat bij make moet je eerst nms undoen (na nader inzien kan dit niet so ye)
         # dit zorgt dat de make niet meer doorgaat
         make clean
         cd "$extra_info"
-        error_message="'make install' gevaald."
+        error_message="'make install' failed."
         ;;
     *)
         handle_error "Rollback Error! with name: $error_name"
@@ -233,14 +233,14 @@ function rollback_pywebserver() {
     case $error_name in
     "unzip")
         #indien fout gaat bij unzip
-        error_message="kan $extra_info niet unzippen."
+        error_message="can't unzip: $extra_info ."
         ;;
     "download")
         # indien het fout gaat bij de download
-        error_message="kan $package niet downloaden vanuit: $package_url"
+        error_message="can't download $package from: $package_url"
     	;;
     "chmod")
-        error_message="kan de webserver geen rechten geven!"
+        error_message="can't give server rights!"
         ;;
     *)
         handle_error "Rollback Error! with name: $error_name"
